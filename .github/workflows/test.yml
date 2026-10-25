@@ -23,7 +23,10 @@ jobs:
           node --check server.mjs
           node --check public/app.js
           node --check public/sw.js
+          node --check public/dsh-mobile.js
           sh -n scripts/start.sh
+          sh -n scripts/install-dsh-mobile.sh
           sh -n scripts/install-dsh-reset-page.sh
+          sh -n scripts/sync-github.sh
       - name: Smoke test
         run: node test/smoke.mjs

@@ -14,8 +14,10 @@ mkdir -p "$DATA/logs"
 chmod 700 "$DATA" "$DATA/logs" 2>/dev/null || true
 cd "$ROOT"
 
-# Keep the DSH-origin view reset bridge present (best effort; DSH can update over it).
-if [ -f "$ROOT/scripts/install-dsh-reset-page.sh" ]; then
+# Keep DSH's mobile adaptation + view reset bridge present (best effort; DSH can update over it).
+if [ -f "$ROOT/scripts/install-dsh-mobile.sh" ]; then
+  sh "$ROOT/scripts/install-dsh-mobile.sh" >/dev/null 2>&1 || true
+elif [ -f "$ROOT/scripts/install-dsh-reset-page.sh" ]; then
   sh "$ROOT/scripts/install-dsh-reset-page.sh" >/dev/null 2>&1 || true
 fi
 

@@ -88,7 +88,7 @@ setsid "$LIBDIR/libproot_exec.so" --root-id --link2symlink --sysvipc \
   /usr/bin/env -i HOME=/root USER=root LOGNAME=root SHELL=/bin/sh \
   TERM=dumb LANG=C.UTF-8 LC_ALL=C.UTF-8 TMPDIR=/tmp NO_COLOR=1 \
   PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-  /bin/sh -lc "cd /workspace/dsh-launcher && [ -f scripts/install-dsh-reset-page.sh ] && sh scripts/install-dsh-reset-page.sh >/dev/null 2>&1 || true; [ -f /workspace/.dsh-env ] && . /workspace/.dsh-env; export DSH_LAUNCHER_DATA='$DATA_GUEST'; exec node server.mjs --host '$LAUNCHER_HOST' --port '$PORT'" \
+  /bin/sh -lc "cd /workspace/dsh-launcher && [ -f scripts/install-dsh-mobile.sh ] && sh scripts/install-dsh-mobile.sh >/dev/null 2>&1 || true; [ -f /workspace/.dsh-env ] && . /workspace/.dsh-env; export DSH_LAUNCHER_DATA='$DATA_GUEST'; exec node server.mjs --host '$LAUNCHER_HOST' --port '$PORT'" \
   >>"$LOG" 2>&1 </dev/null 9>&- &
 
 echo "launched pid=$!" >&9

@@ -20,6 +20,7 @@ DSH is excellent on a desktop, but a phone usually means: open a terminal, start
 - starts or adopts a local `dsh web` instance;
 - discovers the access token from DSH's own logs;
 - embeds DSH in an app-like shell with a mobile-safe back button;
+- adapts DSH itself at phone width: full-width conversation, bottom navigation, drawer sidebar, and a full-screen tool panel;
 - clears DSH's persisted right-side document preview before entering, so a phone-width screen does not get stuck on a file diff;
 - follows the system light/dark appearance with a Miuix visual language.
 
@@ -30,6 +31,7 @@ All data stays on the device. There is no telemetry, account, or external servic
 - **One tap**: starts DSH if needed, or adopts the DSH already running on port 3080.
 - **Token discovery**: reads the token printed in DSH logs; no manual copy/paste.
 - **Embedded DSH**: opens DSH in a full-height iframe with a `启动器` back button and a `对话` reset button.
+- **DSH mobile layout**: at `max-width: 700px`, replaces DSH's icon rail with a bottom bar, opens the sidebar as a drawer, and gives the conversation the full width.
 - **Back to chat bridge**: clears `dsh.sidebar-right.*` localStorage layouts when entering embedded DSH, so old file-preview tabs do not cover the chat.
 - **Recent sessions**: reads DSH's local session projection cache and shows the six most recent titles, workspaces, and ages.
 - **Profiles, workspace, port, bind address**: editable from the phone.
@@ -82,6 +84,38 @@ The launcher ships a manifest, icons, and a service worker. On Chrome Android:
 
 The PWA is scoped to the launcher origin. If you open the launcher via `localhost`, DSH links use `localhost` too, keeping the DSH auth cookie same-site inside the iframe.
 
+## DSH mobile adaptation
+
+DSH's desktop layout keeps a 56 px icon rail and a 280 px sidebar column even on a phone; opening the sidebar leaves only 110 px for the conversation. This project injects a small mobile layer into DSH's web frontend:
+
+| DSH mobile — light | DSH mobile — dark |
+| --- | --- |
+| ![DSH mobile light](docs/dsh-mobile.png) | ![DSH mobile dark](docs/dsh-mobile-dark.png) |
+
+At **700 px and below**:
+
+- the icon rail is hidden and the center column gets the full viewport;
+- a four-item bottom bar exposes **会话 / 新建 / 搜索 / 工作区**;
+- the sidebar becomes a fixed 86vw drawer over a dimmed conversation, and closes after choosing a session;
+- a full-screen right sidebar (files, terminal, jobs) hides the bottom bar while open;
+- the composer gets 16 px text and the bottom bar respects `env(safe-area-inset-bottom)`.
+
+Above 700 px the desktop layout is untouched. The injected files are:
+
+```text
+public/dsh-mobile.css
+public/dsh-mobile.js
+    → DSH @deepseek-ai/dsh-web-frontend/dist/
+```
+
+Install or repair both the mobile layer and the reset bridge:
+
+```sh
+sh scripts/install-dsh-mobile.sh
+```
+
+`scripts/start.sh` and the Android boot hook run this best-effort. DSH upgrades can replace its `index.html`; re-run the installer if the bottom navigation disappears.
+
 ## Back-to-chat bridge
 
 DSH persists the right-side document/diff layout in `localStorage` under keys starting with `dsh.sidebar-right.`. On a phone-width iframe, that saved panel can fill the screen and hide the chat.
@@ -95,13 +129,13 @@ public/dsh-pocket-reset.html
 
 When `/open` is loaded inside the launcher iframe, it redirects through this page. The page removes the saved right-sidebar layouts and redirects to the real DSH token URL. When opened in a normal top-level tab, it only forwards the token and leaves the saved layout alone.
 
-Install or repair the bridge:
+The bridge is installed by the same command as the mobile layer:
 
 ```sh
-sh scripts/install-dsh-reset-page.sh
+sh scripts/install-dsh-mobile.sh
 ```
 
-`scripts/start.sh` and the Android boot hook run this installer best-effort. If DSH is upgraded and the bridge file disappears, `/open` falls back to normal DSH behavior; re-run the installer to restore the reset behavior.
+`public/dsh-pocket-reset.html` is still usable directly through `scripts/install-dsh-reset-page.sh` if you only want the reset behavior. If DSH is upgraded and the bridge file disappears, `/open` falls back to normal DSH behavior; re-run the mobile installer to restore both pieces.
 
 ## Android boot hook (optional)
 
@@ -149,7 +183,7 @@ Other environment variables:
 | `DSH_LAUNCHER_DATA` | Data directory (default `./data`) |
 | `DSH_LAUNCHER_DSH_COMMAND` | DSH executable path |
 | `DSH_LAUNCHER_ACCESS_KEY` | Access key when binding a non-loopback address |
-| `DSH_WEB_FRONTEND_DIST` | Override the DSH frontend dist for the reset bridge installer |
+| `DSH_WEB_FRONTEND_DIST` | Override the DSH frontend dist for the mobile/reset installer |
 
 ## Security
 
@@ -174,6 +208,7 @@ PWA (3081)
   │         ├─ remove dsh.sidebar-right.* when embedded
   │         └─ redirect to /?token=…
   └─ iframe DSH with a 启动器 back button and a 对话 reset button
+       └─ dsh-mobile.css/js at <=700px: bottom nav + drawer sidebar
 ```
 
 The launcher starts DSH detached so it survives a launcher restart. On restart, the launcher recovers ownership from `data/managed.json`. A DSH started outside the launcher is adopted read-only: it can be opened but not stopped from the launcher.
@@ -200,10 +235,18 @@ POST endpoints require `Content-Type: application/json` and same-origin.
 node --check server.mjs
 node --check public/app.js
 node --check public/sw.js
+node --check public/dsh-mobile.js
+sh -n scripts/install-dsh-mobile.sh
 node test/smoke.mjs
 ```
 
-The smoke test runs a mock DSH and exercises start, token discovery, `/open` redirect, redacted logs, stop, and settings. GitHub Actions runs the same test on Node 22.
+The smoke test runs a mock DSH and exercises start, token discovery, `/open` redirect, redacted logs, stop, and settings. GitHub Actions runs the same test on Node 22 and 24.
+
+Every change can be committed and pushed with:
+
+```sh
+sh scripts/sync-github.sh "feat: describe the change"
+```
 
 ## Troubleshooting
 
@@ -213,7 +256,9 @@ The smoke test runs a mock DSH and exercises start, token discovery, `/open` red
 
 **Embedded page is blank** — use **新页面** or **直接打开 DSH**. If DSH adds an iframe-blocking header in the future, the embedded view will not work, but the new tab will.
 
-**Still see a file diff/right panel after entering** — tap **对话** in the DSH top bar. To reinstall the bridge: `sh scripts/install-dsh-reset-page.sh`.
+**Still see a file diff/right panel after entering** — tap **对话** in the DSH top bar. To reinstall the mobile layer and bridge: `sh scripts/install-dsh-mobile.sh`.
+
+**Bottom navigation disappeared after upgrading DSH** — run `sh scripts/install-dsh-mobile.sh` again. DSH upgrades replace its frontend `index.html`.
 
 **PWA keeps old UI** — bump `VERSION` in `public/sw.js`, then reopen / clear site data. The service worker removes old caches.
 
@@ -222,7 +267,7 @@ The smoke test runs a mock DSH and exercises start, token discovery, `/open` red
 ## Limitations
 
 - Not a native Android APK; it is a local PWA shell around DSH.
-- DSH's own UI is still DSH's UI. This project does not rewrite DSH's layout.
+- The mobile layer injects CSS and a small DOM navigation bar into DSH; it is not a fork of DSH. A DSH upgrade may require re-running the installer.
 - A DSH instance started outside the launcher cannot be stopped/restarted by the launcher.
 - The optional boot hook assumes Eta's paths and root/KernelSU; adapt it for other environments.
 - PWA installation is available only in a secure context (`127.0.0.1` / HTTPS), not over plain LAN HTTP.
