@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "platform": "win32-x64",
+  "source": "native/bash-ipc (original MIT)",
+  "sources": {
+    "security.h": "53ec2455f4aff0224db9ae521e1e83668e047ce02de22c6007925bfb0f775a28",
+    "opsipc.cpp": "3e52ea4f09ad0fbd688d1c42d1bf197fb2ab24b3245d9282e70c259683fc9a81",
+    "opsnt.cpp": "6a08450919b8d91c3ab679ea45f58c5ef36b2ddda758ad3455cd0c3f424e4cbf"
+  },
+  "msysSha256": "2a89b7c31b323c42e2fb37900af087aeb27417694e630a210bc75b0369410bc7",
+  "files": {
+    "opsipc.dll": "3dee40582d4db3f524e0963801f7de3e68fc6dd09eb9013430d501fe6bd3525f",
+    "opsnt.dll": "85dbe637c6b7e6f1e1a2fd279badb6b37de51d9757967d9b275370589ffebb4d"
+  }
+}

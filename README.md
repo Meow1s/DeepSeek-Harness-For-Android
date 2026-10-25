@@ -20,7 +20,7 @@ DSH is excellent on a desktop, but a phone usually means: open a terminal, start
 - starts or adopts a local `dsh web` instance;
 - discovers the access token from DSH's own logs;
 - embeds DSH in an app-like shell with a mobile-safe back button;
-- adapts DSH itself at phone width: full-width conversation, bottom navigation, drawer sidebar, and a full-screen tool panel;
+- bundles **dsh-web-mobile** for the mobile DSH UI and **dsh-ops** for native file/shell tools;
 - clears DSH's persisted right-side document preview before entering, so a phone-width screen does not get stuck on a file diff;
 - follows the system light/dark appearance with a Miuix visual language.
 
@@ -31,20 +31,19 @@ All data stays on the device. There is no telemetry, account, or external servic
 - **One tap**: starts DSH if needed, or adopts the DSH already running on port 3080.
 - **Token discovery**: reads the token printed in DSH logs; no manual copy/paste.
 - **Embedded DSH**: opens DSH in a full-height iframe with a `启动器` back button and a `对话` reset button.
-- **DSH mobile layout**: at `max-width: 700px`, replaces DSH's icon rail with a bottom bar, opens the sidebar as a drawer, and gives the conversation the full width.
+- **Bundled plugins**: ships pinned snapshots of **dsh-web-mobile** (mobile DSH UI) and **dsh-ops** (native file/shell tools), linked into the `web` profile automatically.
 - **Back to chat bridge**: clears `dsh.sidebar-right.*` localStorage layouts when entering embedded DSH, so old file-preview tabs do not cover the chat.
 - **Recent sessions**: reads DSH's local session projection cache and shows the six most recent titles, workspaces, and ages.
 - **Profiles, workspace, port, bind address**: editable from the phone.
 - **PWA**: installable to the home screen, service worker offline shell, standalone display.
 - **Boot hook**: optional KernelSU `service.d` script to start the launcher after boot. It does not auto-start DSH.
 - **Security defaults**: loopback-only by default, optional access key for non-loopback binds, token/API-key redaction in the log viewer.
-- **No runtime npm dependencies**: Node standard library plus the bundled Miuix CSS.
 
 ## Requirements
 
 - **Android with a Linux userland** such as Eta (Debian proot) or Termux. The boot hook included here is written for Eta + KernelSU, but the launcher itself is generic Linux.
-- **Node.js 22+**.
-- **DSH 0.2.x** installed and able to run the `web` profile.
+- **Node.js 24+** (required by the bundled dsh-web-mobile plugin).
+- **DSH 0.2.1+** installed and able to run the `web` profile.
 - A modern Chromium-based browser for PWA installation (Chrome on Android; `127.0.0.1` is treated as a secure context).
 - Root + KernelSU only if you want the optional Android boot hook.
 
@@ -66,7 +65,7 @@ The launcher starts on port 3081. DSH itself defaults to port 3080. If DSH is al
 
 ### Android
 
-1. Set up Eta (Debian) or Termux, install Node.js 22+ and DSH.
+1. Set up Eta (Debian) or Termux, install Node.js 24+ and DSH.
 2. Clone this repository into the Linux userland.
 3. Run `sh scripts/start.sh` once.
 4. Open `http://127.0.0.1:3081/` in Chrome.
@@ -84,37 +83,20 @@ The launcher ships a manifest, icons, and a service worker. On Chrome Android:
 
 The PWA is scoped to the launcher origin. If you open the launcher via `localhost`, DSH links use `localhost` too, keeping the DSH auth cookie same-site inside the iframe.
 
-## DSH mobile adaptation
+## Bundled DSH plugins
 
-DSH's desktop layout keeps a 56 px icon rail and a 280 px sidebar column even on a phone; opening the sidebar leaves only 110 px for the conversation. This project injects a small mobile layer into DSH's web frontend:
+The launcher ships two DSH plugins as pinned source snapshots under `plugins/`:
 
-| DSH mobile — light | DSH mobile — dark |
-| --- | --- |
-| ![DSH mobile light](docs/dsh-mobile.png) | ![DSH mobile dark](docs/dsh-mobile-dark.png) |
+- **dsh-web-mobile 3.2.1** — the mobile DSH UI: top-left drawer button, mobile header, bottom sheets, safe-area handling, and touch-friendly composer controls. MIT, by [mexiaosqwq](https://github.com/mexiaosqwq/dsh-web-mobile).
+- **dsh-ops 0.4.1** — native file and shell tools for DSH. MIT AND Apache-2.0, by [T-Auto](https://github.com/T-Auto/dsh-ops).
 
-At **700 px and below**:
-
-- the icon rail is hidden and the center column gets the full viewport;
-- a four-item bottom bar exposes **会话 / 新建 / 搜索 / 工作区**;
-- the sidebar becomes a fixed 86vw drawer over a dimmed conversation, and closes after choosing a session;
-- a full-screen right sidebar (files, terminal, jobs) hides the bottom bar while open;
-- the composer gets 16 px text and the bottom bar respects `env(safe-area-inset-bottom)`.
-
-Above 700 px the desktop layout is untouched. The injected files are:
-
-```text
-public/dsh-mobile.css
-public/dsh-mobile.js
-    → DSH @deepseek-ai/dsh-web-frontend/dist/
-```
-
-Install or repair both the mobile layer and the reset bridge:
+`scripts/install-plugins.sh` links both directories into the `web` profile with `dsh plugin add link:...` and makes sure they are listed in `dsh.profile.bundles`. The launcher's `start.sh` and Android boot hook run it best-effort. Restart DSH after installing or changing plugins; its client bundles load at server start.
 
 ```sh
-sh scripts/install-dsh-mobile.sh
+sh scripts/install-plugins.sh
 ```
 
-`scripts/start.sh` and the Android boot hook run this best-effort. DSH upgrades can replace its `index.html`; re-run the installer if the bottom navigation disappears.
+The mobile UI (including the drawer and account popover) is provided by dsh-web-mobile; there is no separate bottom navigation bar injected by this launcher. The snapshots are not git submodules; see [plugins/README.md](plugins/README.md) for versions, licenses, and update notes.
 
 ## Back-to-chat bridge
 
@@ -129,13 +111,13 @@ public/dsh-pocket-reset.html
 
 When `/open` is loaded inside the launcher iframe, it redirects through this page. The page removes the saved right-sidebar layouts and redirects to the real DSH token URL. When opened in a normal top-level tab, it only forwards the token and leaves the saved layout alone.
 
-The bridge is installed by the same command as the mobile layer:
+Install or repair the bridge:
 
 ```sh
-sh scripts/install-dsh-mobile.sh
+sh scripts/install-dsh-reset-page.sh
 ```
 
-`public/dsh-pocket-reset.html` is still usable directly through `scripts/install-dsh-reset-page.sh` if you only want the reset behavior. If DSH is upgraded and the bridge file disappears, `/open` falls back to normal DSH behavior; re-run the mobile installer to restore both pieces.
+`scripts/start.sh` and the Android boot hook run this installer best-effort. If DSH is upgraded and the bridge file disappears, `/open` falls back to normal DSH behavior; re-run the installer to restore the reset behavior.
 
 ## Android boot hook (optional)
 
@@ -183,7 +165,7 @@ Other environment variables:
 | `DSH_LAUNCHER_DATA` | Data directory (default `./data`) |
 | `DSH_LAUNCHER_DSH_COMMAND` | DSH executable path |
 | `DSH_LAUNCHER_ACCESS_KEY` | Access key when binding a non-loopback address |
-| `DSH_WEB_FRONTEND_DIST` | Override the DSH frontend dist for the mobile/reset installer |
+| `DSH_WEB_FRONTEND_DIST` | Override the DSH frontend dist for the reset bridge installer |
 
 ## Security
 
@@ -208,7 +190,7 @@ PWA (3081)
   │         ├─ remove dsh.sidebar-right.* when embedded
   │         └─ redirect to /?token=…
   └─ iframe DSH with a 启动器 back button and a 对话 reset button
-       └─ dsh-mobile.css/js at <=700px: bottom nav + drawer sidebar
+       └─ bundled dsh-web-mobile + dsh-ops loaded by the web profile
 ```
 
 The launcher starts DSH detached so it survives a launcher restart. On restart, the launcher recovers ownership from `data/managed.json`. A DSH started outside the launcher is adopted read-only: it can be opened but not stopped from the launcher.
@@ -235,12 +217,11 @@ POST endpoints require `Content-Type: application/json` and same-origin.
 node --check server.mjs
 node --check public/app.js
 node --check public/sw.js
-node --check public/dsh-mobile.js
-sh -n scripts/install-dsh-mobile.sh
+sh -n scripts/install-plugins.sh
 node test/smoke.mjs
 ```
 
-The smoke test runs a mock DSH and exercises start, token discovery, `/open` redirect, redacted logs, stop, and settings. GitHub Actions runs the same test on Node 22 and 24.
+The smoke test runs a mock DSH and exercises start, token discovery, `/open` redirect, redacted logs, stop, and settings. GitHub Actions runs the same test on Node 24.
 
 Every change can be committed and pushed with:
 
@@ -256,9 +237,9 @@ sh scripts/sync-github.sh "feat: describe the change"
 
 **Embedded page is blank** — use **新页面** or **直接打开 DSH**. If DSH adds an iframe-blocking header in the future, the embedded view will not work, but the new tab will.
 
-**Still see a file diff/right panel after entering** — tap **对话** in the DSH top bar. To reinstall the mobile layer and bridge: `sh scripts/install-dsh-mobile.sh`.
+**Still see a file diff/right panel after entering** — tap **对话** in the DSH top bar. To reinstall the bridge: `sh scripts/install-dsh-reset-page.sh`.
 
-**Bottom navigation disappeared after upgrading DSH** — run `sh scripts/install-dsh-mobile.sh` again. DSH upgrades replace its frontend `index.html`.
+**Mobile UI is missing after an upgrade or restart** — check that the bundled plugins are linked: `sh scripts/install-plugins.sh`, then restart DSH (not just the browser). The mobile UI is a client plugin and only loads when the DSH server starts.
 
 **PWA keeps old UI** — bump `VERSION` in `public/sw.js`, then reopen / clear site data. The service worker removes old caches.
 
@@ -267,7 +248,7 @@ sh scripts/sync-github.sh "feat: describe the change"
 ## Limitations
 
 - Not a native Android APK; it is a local PWA shell around DSH.
-- The mobile layer injects CSS and a small DOM navigation bar into DSH; it is not a fork of DSH. A DSH upgrade may require re-running the installer.
+- **dsh-web-mobile and dsh-ops are pinned third-party snapshots. Updating them requires replacing the directories and re-testing DSH compatibility. dsh-ops native runtime support is platform-specific.**
 - A DSH instance started outside the launcher cannot be stopped/restarted by the launcher.
 - The optional boot hook assumes Eta's paths and root/KernelSU; adapt it for other environments.
 - PWA installation is available only in a secure context (`127.0.0.1` / HTTPS), not over plain LAN HTTP.
@@ -275,10 +256,12 @@ sh scripts/sync-github.sh "feat: describe the change"
 ## Credits
 
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) by DeepSeek.
+- [dsh-web-mobile](https://github.com/mexiaosqwq/dsh-web-mobile) by mexiaosqwq (MIT) — bundled mobile DSH UI.
+- [dsh-ops](https://github.com/T-Auto/dsh-ops) by T-Auto (MIT AND Apache-2.0) — bundled native tools.
 - [Miuix](https://github.com/compose-miuix-ui/miuix) design language; web tokens/component CSS from [miuix-vue](https://github.com/YuKongA/miuix-vue) (Apache-2.0).
 - Miuix visual references are used descriptively. This project is independent and is not affiliated with Xiaomi, MIUI, or HyperOS.
 - The DSH whale mark is used only to identify the local DSH launcher.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). The bundled Miuix CSS is Apache-2.0; see [public/vendor/miuix/LICENSE](public/vendor/miuix/LICENSE).
+MIT. See [LICENSE](LICENSE). The bundled Miuix CSS is Apache-2.0; see [public/vendor/miuix/LICENSE](public/vendor/miuix/LICENSE). Bundled plugins keep their own licenses under [plugins/](plugins/README.md).
