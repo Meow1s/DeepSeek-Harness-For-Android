@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f7">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <meta name="dsh-pocket-reset" content="1">
+  <title>回到对话</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f7;
+      --fg: #000;
+      --muted: rgba(0, 0, 0, .56);
+      --primary: #3482ff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #000;
+        --fg: #f2f2f2;
+        --muted: rgba(255, 255, 255, .5);
+        --primary: #277af7;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-height: 100svh;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--fg);
+      font: 17px/1.4 "MiSans", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+      text-align: center;
+    }
+    main { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--primary) 14%, transparent);
+      color: var(--primary);
+      font-size: 28px;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    h1 { margin: 2px 0 0; font-size: 20px; font-weight: 600; }
+    p { margin: 0; color: var(--muted); font-size: 13px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="icon" aria-hidden="true">↩</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>回到对话</h1>
+    <p>正在整理 DSH 视图…</p>
+  </main>
+  <script>
+    (function () {
+      try {
+        var embedded = window.self !== window.top
+        if (embedded) {
+          var remove = []
+          for (var index = 0; index < localStorage.length; index += 1) {
+            var key = localStorage.key(index)
+            if (key && key.indexOf('dsh.sidebar-right.') === 0) remove.push(key)
+          }
+          for (var i = 0; i < remove.length; i += 1) localStorage.removeItem(remove[i])
+        }
+      } catch (_) {}
+      var token = new URLSearchParams(location.search).get('token')
+      var target = token ? '/?token=' + encodeURIComponent(token) : '/'
+      location.replace(target)
+    })()
+  </script>
+</body>
+</html>

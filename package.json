@@ -1,0 +1,31 @@
+{
+  "name": "deepseek-harness-for-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Miuix-style mobile PWA launcher for DeepSeek Harness (DSH) on Android.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Meow1s/DeepSeek-Harness-For-Android.git"
+  },
+  "homepage": "https://github.com/Meow1s/DeepSeek-Harness-For-Android",
+  "bugs": {
+    "url": "https://github.com/Meow1s/DeepSeek-Harness-For-Android/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "android",
+    "pwa",
+    "miuix"
+  ],
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node test/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
