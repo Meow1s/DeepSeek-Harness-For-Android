@@ -16,6 +16,10 @@ A thin Android WebView shell for the local DSH launcher.
   through WebView history; at launcher home the callback is released so the
   system/Miuix predictive animation can close the app. DSH close uses a
   scale/rounded transition.
+- Task notifications: a foreground service posts an ongoing notification with
+  a chronometer and live work process while a turn is running, then a normal
+  completion or failure notification. Android 13+ asks for notification
+  permission on first launch.
 - If the launcher is unreachable, shows a native error screen with:
   - **重试**
   - **启动本地服务** — runs `su -c "sh /data/adb/service.d/dsh-launcher.sh"`
@@ -26,12 +30,12 @@ A thin Android WebView shell for the local DSH launcher.
 | Field | Value |
 | --- | --- |
 | Package | `com.meow1s.dshlauncher` |
-| Version | 1.0.2 (versionCode 3) |
+| Version | 1.0.3 (versionCode 4) |
 | minSdk | 26 |
 | targetSdk | 34 |
 | Label | DSH 启动器 |
 | Icon | Official DSH whale mark |
-| Permissions | INTERNET, ACCESS_NETWORK_STATE |
+| Permissions | INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC |
 
 ## Build
 
@@ -56,7 +60,7 @@ sh android-app/build.sh
 Output:
 
 ```text
-dist/dsh-launcher-1.0.2.apk
+dist/dsh-launcher-1.0.3.apk
 ```
 
 Create a release key (never commit it):
@@ -76,7 +80,7 @@ The signed APK is uploaded to:
 
 https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases
 
-Release 1.0.2 (homepage cleanup + Miuix back):
+Release 1.0.3 (task notifications):
 
 - APK: `dsh-launcher-1.0.2.apk`
 - SHA-256: `cb9abc4eb443d26e50300e71e3b3c63bdfc8abd23b73dc785285783864565538`

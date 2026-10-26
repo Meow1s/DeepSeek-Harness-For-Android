@@ -21,6 +21,9 @@ fi
 if [ -f "$ROOT/scripts/install-dsh-reset-page.sh" ]; then
   sh "$ROOT/scripts/install-dsh-reset-page.sh" >/dev/null 2>&1 || true
 fi
+if [ -f "$ROOT/scripts/install-dsh-notify.sh" ]; then
+  sh "$ROOT/scripts/install-dsh-notify.sh" >/dev/null 2>&1 || true
+fi
 
 if [ -f "$PIDFILE" ]; then
   PID=$(cat "$PIDFILE" 2>/dev/null || true)

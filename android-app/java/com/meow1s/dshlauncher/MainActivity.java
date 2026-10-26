@@ -1,9 +1,11 @@
 package com.meow1s.dshlauncher;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
@@ -64,6 +66,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         applySystemBars();
         setContentView(R.layout.activity_main);
+        requestNotificationPermission();
 
         webView = findViewById(R.id.webView);
         progress = findViewById(R.id.progress);
@@ -131,6 +134,7 @@ public class MainActivity extends Activity {
         cookies.setAcceptThirdPartyCookies(webView, true);
 
         webView.addJavascriptInterface(new DshBridge(), "DSHNative");
+        webView.addJavascriptInterface(new NotifyBridge(), "DSHNotify");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -220,6 +224,39 @@ public class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 901);
+        }
+    }
+
+    /**
+     * JS bridge used by the launcher PWA when the DSH task bridge reports
+     * running / update / completed / failed edges.
+     */
+    public class NotifyBridge {
+        @JavascriptInterface
+        public void taskStart(String title, String process, long startedAt) {
+            TaskNotificationService.start(MainActivity.this, title, process, startedAt);
+        }
+
+        @JavascriptInterface
+        public void taskUpdate(String process) {
+            TaskNotificationService.update(MainActivity.this, process);
+        }
+
+        @JavascriptInterface
+        public void taskFinish(boolean failed, String message) {
+            TaskNotificationService.finish(MainActivity.this, failed, message);
+        }
+
+        @JavascriptInterface
+        public void taskCancel() {
+            TaskNotificationService.cancel(MainActivity.this);
+        }
     }
 
     /**
@@ -406,7 +443,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
-        if (webView != null) webView.onPause();
+        // Keep the WebView JS alive while a task runs so the foreground task
+        // notification can keep receiving process updates.
         super.onPause();
     }
 

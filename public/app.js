@@ -927,6 +927,23 @@
       updateInstallUI()
       toast('已安装到主屏')
     })
+    window.addEventListener('message', (event) => {
+      if (event.source !== els.dshFrame.contentWindow) return
+      const data = event.data
+      if (!data || data.channel !== 'dsh-task') return
+      const notify = window.DSHNotify
+      if (!notify) return
+      if (data.state === 'running') {
+        const startedAt = Number(data.startedAt) || Date.now()
+        notify.taskStart(String(data.title || 'DSH 任务'), String(data.process || '正在处理…'), startedAt)
+      } else if (data.state === 'update') {
+        notify.taskUpdate(String(data.process || '正在处理…'))
+      } else if (data.state === 'completed') {
+        notify.taskFinish(false, String(data.message || data.process || '任务完成'))
+      } else if (data.state === 'failed') {
+        notify.taskFinish(true, String(data.message || data.process || '任务失败'))
+      }
+    })
     window.addEventListener('popstate', () => {
       if (state.dshOpen) closeDsh(true)
     })

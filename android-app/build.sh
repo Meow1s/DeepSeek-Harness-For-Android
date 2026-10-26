@@ -18,7 +18,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/android-app"
 BUILD="$APP/build"
 DIST="$ROOT/dist"
-NAME="dsh-launcher-1.0.2.apk"
+NAME="dsh-launcher-1.0.3.apk"
 
 : "${ANDROID_JAR:?set ANDROID_JAR to the Android SDK android.jar}"
 : "${D8_JAR:?set D8_JAR to build-tools/lib/d8.jar}"

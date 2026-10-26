@@ -37,6 +37,7 @@ DSH 在桌面上很好用，但在手机上通常要打开终端、启动 `dsh w
 - **PWA**：可添加到主屏，Service Worker 离线壳，独立窗口显示。
 - **APK 壳**：可选的签名 Android WebView 包装，直接打开本地启动器。
 - **Miuix 返回**：启用 Android 13+ 预测性返回；DSH 返回使用缩放/圆角过渡。
+- **任务通知**：DSH 工作时显示常驻通知，含已用时间和当前工作过程；完成 / 失败时各发一条通知。
 - **开机自启**：可选 KernelSU `service.d` 钩子；只启动启动器，不自动启动 DSH。
 - **安全默认值**：默认只监听回环地址；监听其它地址时要求访问密钥；日志会脱敏 token / API key。
 - **零运行时 npm 依赖**：Node 标准库 + 内置的 Miuix CSS。
@@ -78,7 +79,7 @@ http://127.0.0.1:3081/
 签名 APK 已发布到 [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest)：
 
 ```text
-dsh-launcher-1.0.2.apk
+dsh-launcher-1.0.3.apk
 ```
 
 APK 是一个**很薄的 WebView 壳**：
@@ -89,7 +90,8 @@ APK 是一个**很薄的 WebView 壳**：
   KernelSU，执行 `/data/adb/service.d/dsh-launcher.sh`）；
 - 包名 `com.meow1s.dshlauncher`，minSdk 26，targetSdk 34；
 - 图标使用 DSH 官方鲸鱼标志；
-- Android 13+ 预测性返回；DSH 返回使用 Miuix 风格缩放/圆角过渡。
+- Android 13+ 预测性返回；DSH 返回使用 Miuix 风格缩放/圆角过渡；
+- 进行中常驻通知带计时和工作过程；完成 / 失败通知。
 
 从 [android-app/README.md](android-app/README.md) 可以自行构建。发布 APK 使用本地
 keystore 签名；如果要持续发布更新，请保管好这个 key。
@@ -227,6 +229,8 @@ node --check public/app.js
 node --check public/sw.js
 sh -n scripts/install-plugins.sh
 sh -n android-app/build.sh
+node --check public/dsh-notify.js
+sh -n scripts/install-dsh-notify.sh
 node test/smoke.mjs
 ```
 

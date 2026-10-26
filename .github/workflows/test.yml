@@ -23,11 +23,13 @@ jobs:
           node --check server.mjs
           node --check public/app.js
           node --check public/sw.js
+          node --check public/dsh-notify.js
           node -e "for (const p of ['dsh-web-mobile','dsh-ops']) { const j=require('./plugins/'+p+'/package.json'); if (!j.version) process.exit(1) }"
           sh -n scripts/start.sh
           sh -n scripts/install-plugins.sh
           sh -n scripts/install-dsh-reset-page.sh
           sh -n scripts/sync-github.sh
+          sh -n scripts/install-dsh-notify.sh
           sh -n android-app/build.sh
       - name: Smoke test
         run: node test/smoke.mjs
