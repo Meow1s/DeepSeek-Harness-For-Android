@@ -1,4 +1,4 @@
-# DSH 启动器 APK
+# DSH Launcher APK
 
 A thin Android WebView shell for the local DSH launcher.
 
@@ -21,8 +21,8 @@ A thin Android WebView shell for the local DSH launcher.
   completion or failure notification. Android 13+ asks for notification
   permission on first launch.
 - If the launcher is unreachable, shows a native error screen with:
-  - **重试**
-  - **启动本地服务** — runs `su -c "sh /data/adb/service.d/dsh-launcher.sh"`
+  - **Retry**
+  - **Start local service** — runs `su -c "sh /data/adb/service.d/dsh-launcher.sh"`
     (requires Root/KernelSU and the installed boot hook).
 
 ## Identity
@@ -33,7 +33,7 @@ A thin Android WebView shell for the local DSH launcher.
 | Version | 1.0.4 (versionCode 5) |
 | minSdk | 26 |
 | targetSdk | 34 |
-| Label | DSH 启动器 |
+| Label | DSH Launcher |
 | Icon | Official DSH whale mark |
 | Permissions | INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC |
 

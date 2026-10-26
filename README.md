@@ -5,7 +5,6 @@ A mobile-first, **Miuix-styled launcher** for [DeepSeek Harness](https://github.
 > **Unofficial community project.** Not affiliated with, endorsed by, or sponsored by DeepSeek or Xiaomi.  
 > This project is a **PWA launcher** with an optional thin APK WebView shell, not a standalone native DSH client and not an official DeepSeek client. It needs DSH running in a Linux userland on Android (Eta, Termux/proot, etc.).
 
-[中文说明](README.zh.md)
 
 | Light | Dark |
 | --- | --- |
@@ -30,7 +29,7 @@ All data stays on the device. There is no telemetry, account, or external servic
 
 - **One tap**: starts DSH if needed, or adopts the DSH already running on port 3080.
 - **Token discovery**: reads the token printed in DSH logs; no manual copy/paste.
-- **Embedded DSH**: opens DSH in a full-height iframe with a `启动器` back button and a `对话` reset button.
+- **Embedded DSH**: opens DSH in a full-height iframe with a `Launcher` back button and a `Chat` reset button.
 - **Bundled plugins**: ships pinned snapshots of **dsh-web-mobile** (mobile DSH UI) and **dsh-ops** (native file/shell tools), linked into the `web` profile automatically.
 - **Back to chat bridge**: clears `dsh.sidebar-right.*` localStorage layouts when entering embedded DSH, so old file-preview tabs do not cover the chat.
 - **Profiles, workspace, port, bind address**: editable from the phone.
@@ -63,7 +62,7 @@ Open:
 http://127.0.0.1:3081/
 ```
 
-The launcher starts on port 3081. DSH itself defaults to port 3080. If DSH is already running, the launcher adopts it; otherwise press **启动并进入** and it will start `dsh web`.
+The launcher starts on port 3081. DSH itself defaults to port 3080. If DSH is already running, the launcher adopts it; otherwise press **Start & Enter** and it will start `dsh web`.
 
 ### Android
 
@@ -80,7 +79,7 @@ If your DSH installation is in a non-standard place, set `DSH_LAUNCHER_DSH_COMMA
 The launcher ships a manifest, icons, and a service worker. On Chrome Android:
 
 1. Open the launcher.
-2. Tap the download icon in the top bar (or **Settings → 安装到主屏**).
+2. Tap the download icon in the top bar (or **Settings → Install to Home screen**).
 3. If no prompt appears, use Chrome's menu → **Add to Home screen / Install app**.
 
 The PWA is scoped to the launcher origin. If you open the launcher via `localhost`, DSH links use `localhost` too, keeping the DSH auth cookie same-site inside the iframe.
@@ -98,8 +97,8 @@ The APK is a **thin WebView shell** for the local launcher:
 - it opens `http://127.0.0.1:3081/` in a full-screen WebView;
 - it does **not** bundle Node, DSH, or the proot rootfs — start the launcher in
   Eta/Termux first;
-- if the launcher is down, the native error screen offers **重试** and, on
-  Root/KernelSU, **启动本地服务** (runs `/data/adb/service.d/dsh-launcher.sh`);
+- if the launcher is down, the native error screen offers **Retry** and, on
+  Root/KernelSU, **Start local service** (runs `/data/adb/service.d/dsh-launcher.sh`);
 - package `com.meow1s.dshlauncher`, minSdk 26, targetSdk 34;
 - launcher icon uses the official DSH whale mark;
 - Android 13+ predictive back; DSH close uses a Miuix-style scale/rounded transition;
@@ -215,7 +214,7 @@ PWA (3081)
   │    └─ DSH-origin dsh-pocket-reset.html?token=…
   │         ├─ remove dsh.sidebar-right.* when embedded
   │         └─ redirect to /?token=…
-  └─ iframe DSH with a 启动器 back button and a 对话 reset button
+  └─ iframe DSH with a Launcher back button and a Chat reset button
        └─ bundled dsh-web-mobile + dsh-ops loaded by the web profile
 ```
 
@@ -260,13 +259,13 @@ sh scripts/sync-github.sh "feat: describe the change"
 
 ## Troubleshooting
 
-**"找不到 DSH 访问令牌"** — DSH prints its token only at startup. The launcher scans `/workspace/daemon/dm_*.log`, `/workspace/dsh/*.log`, and its own `data/logs/dsh-*.log`. Restart DSH; for a managed instance use **重启** in the launcher.
+**"DSH access token not found"** — DSH prints its token only at startup. The launcher scans `/workspace/daemon/dm_*.log`, `/workspace/dsh/*.log`, and its own `data/logs/dsh-*.log`. Restart DSH; for a managed instance use **Restart** in the launcher.
 
-**"端口已被占用"** — change the DSH port in settings or stop the process on 3080.
+**"Port already in use"** — change the DSH port in settings or stop the process on 3080.
 
-**Embedded page is blank** — use **新页面** or **直接打开 DSH**. If DSH adds an iframe-blocking header in the future, the embedded view will not work, but the new tab will.
+**Embedded page is blank** — use **New tab** or **Open DSH directly**. If DSH adds an iframe-blocking header in the future, the embedded view will not work, but the new tab will.
 
-**Still see a file diff/right panel after entering** — tap **对话** in the DSH top bar. To reinstall the bridge: `sh scripts/install-dsh-reset-page.sh`.
+**Still see a file diff/right panel after entering** — tap **Chat** in the DSH top bar. To reinstall the bridge: `sh scripts/install-dsh-reset-page.sh`.
 
 **Mobile UI is missing after an upgrade or restart** — check that the bundled plugins are linked: `sh scripts/install-plugins.sh`, then restart DSH (not just the browser). The mobile UI is a client plugin and only loads when the DSH server starts.
 
