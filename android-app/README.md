@@ -30,7 +30,7 @@ A thin Android WebView shell for the local DSH launcher.
 | Field | Value |
 | --- | --- |
 | Package | `com.meow1s.dshlauncher` |
-| Version | 1.0.3 (versionCode 4) |
+| Version | 1.0.4 (versionCode 5) |
 | minSdk | 26 |
 | targetSdk | 34 |
 | Label | DSH 启动器 |
@@ -60,7 +60,7 @@ sh android-app/build.sh
 Output:
 
 ```text
-dist/dsh-launcher-1.0.3.apk
+dist/dsh-launcher-1.0.4.apk
 ```
 
 Create a release key (never commit it):
@@ -80,14 +80,14 @@ The signed APK is uploaded to:
 
 https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases
 
-Release 1.0.3 (task notifications):
+Release 1.0.4 (settings back + icon):
 
-- APK: `dsh-launcher-1.0.2.apk`
-- SHA-256: `cb9abc4eb443d26e50300e71e3b3c63bdfc8abd23b73dc785285783864565538`
+- APK: `dsh-launcher-1.0.4.apk`
+- SHA-256: `0545c8640eb0a85a461808ee980af4f44f10f0185edb9a80ead09e0bd6830d37`
 - Signing certificate SHA-256:
   `db871ab22df69e3289bbdc0480510cc5f482cf249aaac82a9d84a5eaf23a92a0`
 
-Release 1.0.1 (official DSH icon) and 1.0.0 remain available. The certificate
+Release 1.0.3 (task notifications), 1.0.2 (homepage + Miuix back), 1.0.1 (official icon) and 1.0.0 remain available. The certificate
 fingerprint is recorded in each release note.
 
 ## Limitations

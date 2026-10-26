@@ -90,7 +90,7 @@ The PWA is scoped to the launcher origin. If you open the launcher via `localhos
 A signed APK is published on [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest):
 
 ```text
-dsh-launcher-1.0.3.apk
+dsh-launcher-1.0.4.apk
 ```
 
 The APK is a **thin WebView shell** for the local launcher:

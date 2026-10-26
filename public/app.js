@@ -537,6 +537,7 @@
     els.settingsSheet.hidden = name !== 'settings'
     els.logsSheet.hidden = name !== 'logs'
     els.body.classList.add('sheet-open')
+    window.DSHNative?.setSheetOpen?.(true)
   }
 
   function closeSheet() {
@@ -545,7 +546,10 @@
     els.settingsSheet.hidden = true
     els.logsSheet.hidden = true
     els.body.classList.remove('sheet-open')
+    window.DSHNative?.setSheetOpen?.(false)
   }
+
+  window.__dshCloseSheet = closeSheet
 
   function askConfirm(title, text, label = '确定') {
     if (state.confirmResolve) {

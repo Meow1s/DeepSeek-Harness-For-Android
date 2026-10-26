@@ -59,6 +59,8 @@ public class MainActivity extends Activity {
     private Object backDispatcher;
     private Object backCallback;
     private boolean backCallbackRegistered = false;
+    private boolean dshOpen = false;
+    private boolean sheetOpen = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -260,20 +262,32 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * The PWA registers a back callback only while the DSH iframe is open.
-     * At launcher home the callback is unregistered, so Android 13+ can use
-     * the system/Miuix predictive back animation to close the activity.
+     * The PWA registers a back callback while DSH or a bottom sheet is open.
+     * At launcher home both are false, so Android 13+ can use the
+     * system/Miuix predictive back animation to close the activity.
      */
     public class DshBridge {
         @JavascriptInterface
         public void setDshOpen(boolean open) {
-            runOnUiThread(() -> setDshBackCallback(open));
+            runOnUiThread(() -> {
+                dshOpen = open;
+                updateBackCallback();
+            });
+        }
+
+        @JavascriptInterface
+        public void setSheetOpen(boolean open) {
+            runOnUiThread(() -> {
+                sheetOpen = open;
+                updateBackCallback();
+            });
         }
     }
 
-    private void setDshBackCallback(boolean open) {
+    private void updateBackCallback() {
         if (Build.VERSION.SDK_INT < 33) return;
-        if (open == backCallbackRegistered) return;
+        boolean shouldRegister = dshOpen || sheetOpen;
+        if (shouldRegister == backCallbackRegistered) return;
         try {
             if (backDispatcher == null) {
                 Method getDispatcher = Activity.class.getMethod("getOnBackInvokedDispatcher");
@@ -281,7 +295,7 @@ public class MainActivity extends Activity {
             }
             Class<?> callbackType = Class.forName("android.window.OnBackInvokedCallback");
             Class<?> dispatcherType = Class.forName("android.window.OnBackInvokedDispatcher");
-            if (open) {
+            if (shouldRegister) {
                 if (backCallback == null) {
                     backCallback = Proxy.newProxyInstance(
                             callbackType.getClassLoader(),
@@ -289,7 +303,10 @@ public class MainActivity extends Activity {
                             (proxy, method, args) -> {
                                 if ("onBackInvoked".equals(method.getName())) {
                                     runOnUiThread(() -> {
-                                        if (webView != null && webView.canGoBack()) {
+                                        if (sheetOpen && webView != null) {
+                                            webView.evaluateJavascript(
+                                                    "window.__dshCloseSheet && window.__dshCloseSheet()", null);
+                                        } else if (webView != null && webView.canGoBack()) {
                                             webView.goBack();
                                         } else {
                                             moveTaskToBack(true);
@@ -434,7 +451,9 @@ public class MainActivity extends Activity {
     @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
+        if (sheetOpen && webView != null) {
+            webView.evaluateJavascript("window.__dshCloseSheet && window.__dshCloseSheet()", null);
+        } else if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {
             moveTaskToBack(true);

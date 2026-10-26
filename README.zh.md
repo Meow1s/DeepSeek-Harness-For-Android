@@ -79,7 +79,7 @@ http://127.0.0.1:3081/
 签名 APK 已发布到 [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest)：
 
 ```text
-dsh-launcher-1.0.3.apk
+dsh-launcher-1.0.4.apk
 ```
 
 APK 是一个**很薄的 WebView 壳**：
