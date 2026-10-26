@@ -89,7 +89,7 @@ The PWA is scoped to the launcher origin. If you open the launcher via `localhos
 A signed APK is published on [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest):
 
 ```text
-dsh-launcher-1.0.0.apk
+dsh-launcher-1.0.1.apk
 ```
 
 The APK is a **thin WebView shell** for the local launcher:
@@ -99,7 +99,8 @@ The APK is a **thin WebView shell** for the local launcher:
   Eta/Termux first;
 - if the launcher is down, the native error screen offers **重试** and, on
   Root/KernelSU, **启动本地服务** (runs `/data/adb/service.d/dsh-launcher.sh`);
-- package `com.meow1s.dshlauncher`, minSdk 26, targetSdk 34.
+- package `com.meow1s.dshlauncher`, minSdk 26, targetSdk 34;
+- launcher icon uses the official DSH whale mark.
 
 Build it yourself from [android-app/README.md](android-app/README.md). The release
 is signed with a local keystore; keep that key safe if you want to publish

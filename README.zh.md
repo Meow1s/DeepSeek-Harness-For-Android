@@ -78,7 +78,7 @@ http://127.0.0.1:3081/
 签名 APK 已发布到 [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest)：
 
 ```text
-dsh-launcher-1.0.0.apk
+dsh-launcher-1.0.1.apk
 ```
 
 APK 是一个**很薄的 WebView 壳**：
@@ -87,7 +87,8 @@ APK 是一个**很薄的 WebView 壳**：
 - **不**内置 Node / DSH / proot rootfs；本地启动器仍需在 Eta / Termux 中运行；
 - 本地服务没启动时，原生错误页提供「重试」和「启动本地服务」（需要 Root /
   KernelSU，执行 `/data/adb/service.d/dsh-launcher.sh`）；
-- 包名 `com.meow1s.dshlauncher`，minSdk 26，targetSdk 34。
+- 包名 `com.meow1s.dshlauncher`，minSdk 26，targetSdk 34；
+- 图标使用 DSH 官方鲸鱼标志。
 
 从 [android-app/README.md](android-app/README.md) 可以自行构建。发布 APK 使用本地
 keystore 签名；如果要持续发布更新，请保管好这个 key。
