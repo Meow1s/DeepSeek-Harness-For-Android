@@ -12,6 +12,10 @@ A thin Android WebView shell for the local DSH launcher.
 - Keeps cookies and DOM storage, including the DSH iframe cookie.
 - Allows cleartext HTTP only for `127.0.0.1` and `localhost`.
 - Handles the Android back button, external links, and file pickers.
+- Android 13+ predictive back: while DSH is open a native back callback returns
+  through WebView history; at launcher home the callback is released so the
+  system/Miuix predictive animation can close the app. DSH close uses a
+  scale/rounded transition.
 - If the launcher is unreachable, shows a native error screen with:
   - **重试**
   - **启动本地服务** — runs `su -c "sh /data/adb/service.d/dsh-launcher.sh"`
@@ -22,7 +26,7 @@ A thin Android WebView shell for the local DSH launcher.
 | Field | Value |
 | --- | --- |
 | Package | `com.meow1s.dshlauncher` |
-| Version | 1.0.1 (versionCode 2) |
+| Version | 1.0.2 (versionCode 3) |
 | minSdk | 26 |
 | targetSdk | 34 |
 | Label | DSH 启动器 |
@@ -34,8 +38,8 @@ A thin Android WebView shell for the local DSH launcher.
 Requirements:
 
 - JDK 17+
-- Android SDK `android.jar` (compileSdk 29 or newer; API 29 is sufficient
-  for the APIs used here)
+- Android SDK `android.jar` (compileSdk 33 or newer; API 33 is required for
+  the `enableOnBackInvokedCallback` manifest attribute)
 - Android build-tools `lib/d8.jar`
 - `aapt2`, `zip`, `zipalign`, `apksigner`
 
@@ -52,7 +56,7 @@ sh android-app/build.sh
 Output:
 
 ```text
-dist/dsh-launcher-1.0.1.apk
+dist/dsh-launcher-1.0.2.apk
 ```
 
 Create a release key (never commit it):
@@ -72,14 +76,14 @@ The signed APK is uploaded to:
 
 https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases
 
-Release 1.0.1 (official DSH icon):
+Release 1.0.2 (homepage cleanup + Miuix back):
 
-- APK: `dsh-launcher-1.0.1.apk`
-- SHA-256: `b6307ab6c641689f69b0b417b495645ee2b38ddf7d49a182293015f31a777966`
+- APK: `dsh-launcher-1.0.2.apk`
+- SHA-256: `cb9abc4eb443d26e50300e71e3b3c63bdfc8abd23b73dc785285783864565538`
 - Signing certificate SHA-256:
   `db871ab22df69e3289bbdc0480510cc5f482cf249aaac82a9d84a5eaf23a92a0`
 
-Release 1.0.0 remains available with the previous icon. The certificate
+Release 1.0.1 (official DSH icon) and 1.0.0 remain available. The certificate
 fingerprint is recorded in each release note.
 
 ## Limitations

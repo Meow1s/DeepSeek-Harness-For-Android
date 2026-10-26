@@ -32,9 +32,6 @@
     errorTitle: $('#errorTitle'),
     errorText: $('#errorText'),
     dismissError: $('#dismissError'),
-    recentList: $('#recentList'),
-    recentCount: $('#recentCount'),
-    openRecentBtn: $('#openRecentBtn'),
     envProfile: $('#envProfile'),
     envWorkspace: $('#envWorkspace'),
     envAddress: $('#envAddress'),
@@ -95,6 +92,8 @@
     confirmResolve: null,
     openSheet: '',
     dshOpen: false,
+    dshClosing: false,
+    dshCloseTimer: 0,
     iframeLoaded: false,
     iframeRequested: false,
     iframePort: 0,
@@ -133,20 +132,6 @@
     if (external) return '外部启动'
     if (!Number.isFinite(ms) || ms < 60_000) return '刚刚启动'
     return '已运行 ' + formatDuration(ms)
-  }
-
-  function relativeTime(timestamp) {
-    if (!timestamp) return ''
-    const diff = Math.max(0, Date.now() - timestamp)
-    const minutes = Math.floor(diff / 60000)
-    if (minutes < 1) return '刚刚'
-    if (minutes < 60) return minutes + ' 分钟前'
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return hours + ' 小时前'
-    const days = Math.floor(hours / 24)
-    if (days < 7) return days + ' 天前'
-    const date = new Date(timestamp)
-    return (date.getMonth() + 1) + '月' + date.getDate() + '日'
   }
 
   function shortPath(value) {
@@ -286,7 +271,6 @@
     els.restartBtn.disabled = true
     els.stopBtn.disabled = true
     els.externalBtn.disabled = true
-    els.openRecentBtn.disabled = true
     setText(els.connectionState, '连接断开')
     els.errorBanner.hidden = false
     els.errorTitle.textContent = '启动器没有响应'
@@ -458,54 +442,6 @@
     els.localPill.classList.toggle('protected', Boolean(status.launcher.authRequired))
   }
 
-  function renderRecent(status) {
-    const sessions = Array.isArray(status.sessions) ? status.sessions : []
-    setText(els.recentCount, sessions.length)
-    els.recentList.replaceChildren()
-    if (sessions.length === 0) {
-      const wrap = document.createElement('div')
-      wrap.className = 'empty-state'
-      const mark = document.createElement('span')
-      mark.className = 'empty-mark'
-      mark.appendChild(icon('i-clock'))
-      const title = document.createElement('p')
-      title.textContent = '还没有最近的会话'
-      const sub = document.createElement('span')
-      sub.textContent = '启动 DSH 后，从第一句开始。'
-      wrap.append(mark, title, sub)
-      els.recentList.appendChild(wrap)
-    } else {
-      for (const session of sessions) {
-        const row = document.createElement('div')
-        row.className = 'recent-item'
-        const bullet = document.createElement('span')
-        bullet.className = 'recent-bullet'
-        bullet.appendChild(icon('i-terminal'))
-        const body = document.createElement('div')
-        body.className = 'recent-body'
-        const title = document.createElement('div')
-        title.className = 'recent-title'
-        title.textContent = session.title || '未命名会话'
-        const meta = document.createElement('div')
-        meta.className = 'recent-meta'
-        const workspace = document.createElement('span')
-        workspace.textContent = session.workspace ? basename(session.workspace) : '未知工作区'
-        const sep = document.createElement('span')
-        sep.className = 'meta-separator'
-        const time = document.createElement('span')
-        time.textContent = relativeTime(session.updatedAt)
-        meta.append(workspace, sep, time)
-        body.append(title, meta)
-        row.append(bullet, body)
-        els.recentList.appendChild(row)
-      }
-    }
-    const usable = isDshUsable(status)
-    els.openRecentBtn.disabled = !usable
-    els.openRecentBtn.classList.toggle('is-disabled', !usable)
-    els.openRecentBtn.querySelector('span').textContent = sessions.length ? '进入 DSH 继续' : '进入 DSH 开始'
-  }
-
   function renderSettingsSummary(status) {
     if (!status.dsh) {
       els.settingsNote.textContent = '当前没有运行中的 DSH。保存后点启动即可。'
@@ -522,7 +458,6 @@
     renderHero(status)
     renderQuickActions(status)
     renderEnvironment(status)
-    renderRecent(status)
     renderSettingsSummary(status)
     setText(els.appVersion, 'v' + (status.app?.version || '1.0.0'))
     if (!isStandalone()) updateInstallUI()
@@ -730,9 +665,13 @@
       return
     }
     state.dshOpen = true
+    state.dshClosing = false
+    window.clearTimeout(state.dshCloseTimer)
+    els.dshScreen.classList.remove('is-closing')
     state.iframePort = state.status.dsh.port
     els.dshScreen.hidden = false
     els.body.classList.add('dsh-open')
+    window.DSHNative?.setDshOpen?.(true)
     if (!state.iframeLoaded) {
       els.dshLoading.classList.remove('is-hidden')
       setText(els.dshLoadingHint, '正在交换访问令牌…')
@@ -750,15 +689,25 @@
   }
 
   function closeDsh(fromPopstate = false) {
-    if (!state.dshOpen) return
+    if (!state.dshOpen || state.dshClosing) return
     state.dshOpen = false
-    els.dshScreen.hidden = true
-    els.body.classList.remove('dsh-open')
+    state.dshClosing = true
+    window.DSHNative?.setDshOpen?.(false)
     if (!fromPopstate && history.state?.dsh) {
       history.back()
     } else if (!fromPopstate && location.hash === '#dsh') {
       history.replaceState(null, '', location.pathname + location.search)
     }
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    els.dshScreen.classList.add('is-closing')
+    window.clearTimeout(state.dshCloseTimer)
+    state.dshCloseTimer = window.setTimeout(() => {
+      els.dshScreen.hidden = true
+      els.dshScreen.classList.remove('is-closing')
+      els.body.classList.remove('dsh-open')
+      state.dshClosing = false
+    }, reduceMotion ? 0 : 260)
   }
 
   function reloadDsh() {
@@ -919,10 +868,6 @@
     els.externalBtn.addEventListener('click', () => {
       if (!state.status?.dsh) return
       window.open('/open', '_blank', 'noopener')
-    })
-    els.openRecentBtn.addEventListener('click', () => {
-      if (isDshUsable(state.status)) openDsh()
-      else toast('先启动 DSH，再继续会话')
     })
     els.settingsBtn.addEventListener('click', openSettings)
     els.editEnvBtn.addEventListener('click', openSettings)

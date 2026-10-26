@@ -33,10 +33,10 @@ DSH 在桌面上很好用，但在手机上通常要打开终端、启动 `dsh w
 - **内嵌 DSH**：全高 iframe，顶部「启动器」返回，另有「对话」复位按钮。
 - **内置插件**：打包 **dsh-web-mobile**（手机端 DSH UI）和 **dsh-ops**（原生文件 / Shell 工具），自动链接进 `web` profile。
 - **回到对话**：清除 `dsh.sidebar-right.*` 持久化布局，不再被 `preview.png` / 文件 diff 挡住。
-- **最近会话**：读取 DSH 本地投影缓存，显示最近 6 个会话的标题、工作区和时间。
 - **配置**：在手机上切换 Profile、工作区、端口、监听地址。
 - **PWA**：可添加到主屏，Service Worker 离线壳，独立窗口显示。
 - **APK 壳**：可选的签名 Android WebView 包装，直接打开本地启动器。
+- **Miuix 返回**：启用 Android 13+ 预测性返回；DSH 返回使用缩放/圆角过渡。
 - **开机自启**：可选 KernelSU `service.d` 钩子；只启动启动器，不自动启动 DSH。
 - **安全默认值**：默认只监听回环地址；监听其它地址时要求访问密钥；日志会脱敏 token / API key。
 - **零运行时 npm 依赖**：Node 标准库 + 内置的 Miuix CSS。
@@ -78,7 +78,7 @@ http://127.0.0.1:3081/
 签名 APK 已发布到 [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest)：
 
 ```text
-dsh-launcher-1.0.1.apk
+dsh-launcher-1.0.2.apk
 ```
 
 APK 是一个**很薄的 WebView 壳**：
@@ -88,7 +88,8 @@ APK 是一个**很薄的 WebView 壳**：
 - 本地服务没启动时，原生错误页提供「重试」和「启动本地服务」（需要 Root /
   KernelSU，执行 `/data/adb/service.d/dsh-launcher.sh`）；
 - 包名 `com.meow1s.dshlauncher`，minSdk 26，targetSdk 34；
-- 图标使用 DSH 官方鲸鱼标志。
+- 图标使用 DSH 官方鲸鱼标志；
+- Android 13+ 预测性返回；DSH 返回使用 Miuix 风格缩放/圆角过渡。
 
 从 [android-app/README.md](android-app/README.md) 可以自行构建。发布 APK 使用本地
 keystore 签名；如果要持续发布更新，请保管好这个 key。

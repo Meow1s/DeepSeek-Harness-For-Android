@@ -1,5 +1,5 @@
 /* DSH Pocket Launcher service worker */
-const VERSION = 'v1.1.0-6'
+const VERSION = 'v1.1.0-7'
 const CACHE = 'dsh-launcher-' + VERSION
 const APP_SHELL = [
   '/',

@@ -33,10 +33,10 @@ All data stays on the device. There is no telemetry, account, or external servic
 - **Embedded DSH**: opens DSH in a full-height iframe with a `启动器` back button and a `对话` reset button.
 - **Bundled plugins**: ships pinned snapshots of **dsh-web-mobile** (mobile DSH UI) and **dsh-ops** (native file/shell tools), linked into the `web` profile automatically.
 - **Back to chat bridge**: clears `dsh.sidebar-right.*` localStorage layouts when entering embedded DSH, so old file-preview tabs do not cover the chat.
-- **Recent sessions**: reads DSH's local session projection cache and shows the six most recent titles, workspaces, and ages.
 - **Profiles, workspace, port, bind address**: editable from the phone.
 - **PWA**: installable to the home screen, service worker offline shell, standalone display.
 - **APK shell**: an optional signed Android WebView wrapper that opens the local launcher.
+- **Miuix back**: Android 13+ predictive back is enabled; returning from DSH uses a scale/rounded transition.
 - **Boot hook**: optional KernelSU `service.d` script to start the launcher after boot. It does not auto-start DSH.
 - **Security defaults**: loopback-only by default, optional access key for non-loopback binds, token/API-key redaction in the log viewer.
 
@@ -89,7 +89,7 @@ The PWA is scoped to the launcher origin. If you open the launcher via `localhos
 A signed APK is published on [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest):
 
 ```text
-dsh-launcher-1.0.1.apk
+dsh-launcher-1.0.2.apk
 ```
 
 The APK is a **thin WebView shell** for the local launcher:
@@ -100,7 +100,8 @@ The APK is a **thin WebView shell** for the local launcher:
 - if the launcher is down, the native error screen offers **重试** and, on
   Root/KernelSU, **启动本地服务** (runs `/data/adb/service.d/dsh-launcher.sh`);
 - package `com.meow1s.dshlauncher`, minSdk 26, targetSdk 34;
-- launcher icon uses the official DSH whale mark.
+- launcher icon uses the official DSH whale mark;
+- Android 13+ predictive back; DSH close uses a Miuix-style scale/rounded transition.
 
 Build it yourself from [android-app/README.md](android-app/README.md). The release
 is signed with a local keystore; keep that key safe if you want to publish

@@ -2,7 +2,7 @@
 # Build the DSH launcher APK.
 #
 # Requirements:
-#   - Android SDK platform android.jar (compileSdk 29 or newer)
+#   - Android SDK platform android.jar (compileSdk 33 or newer)
 #   - Android build-tools d8.jar
 #   - JDK 17+ (javac, keytool)
 #   - aapt2, zip, zipalign, apksigner
@@ -18,7 +18,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/android-app"
 BUILD="$APP/build"
 DIST="$ROOT/dist"
-NAME="dsh-launcher-1.0.1.apk"
+NAME="dsh-launcher-1.0.2.apk"
 
 : "${ANDROID_JAR:?set ANDROID_JAR to the Android SDK android.jar}"
 : "${D8_JAR:?set D8_JAR to build-tools/lib/d8.jar}"

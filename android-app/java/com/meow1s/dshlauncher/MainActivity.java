@@ -7,12 +7,14 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.Window;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -25,6 +27,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +54,9 @@ public class MainActivity extends Activity {
     private Button startServiceButton;
     private ValueCallback<Uri[]> fileCallback;
     private boolean mainFrameFailed = false;
+    private Object backDispatcher;
+    private Object backCallback;
+    private boolean backCallbackRegistered = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -122,6 +129,8 @@ public class MainActivity extends Activity {
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
         cookies.setAcceptThirdPartyCookies(webView, true);
+
+        webView.addJavascriptInterface(new DshBridge(), "DSHNative");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -211,6 +220,61 @@ public class MainActivity extends Activity {
                 }
             }
         });
+    }
+
+    /**
+     * The PWA registers a back callback only while the DSH iframe is open.
+     * At launcher home the callback is unregistered, so Android 13+ can use
+     * the system/Miuix predictive back animation to close the activity.
+     */
+    public class DshBridge {
+        @JavascriptInterface
+        public void setDshOpen(boolean open) {
+            runOnUiThread(() -> setDshBackCallback(open));
+        }
+    }
+
+    private void setDshBackCallback(boolean open) {
+        if (Build.VERSION.SDK_INT < 33) return;
+        if (open == backCallbackRegistered) return;
+        try {
+            if (backDispatcher == null) {
+                Method getDispatcher = Activity.class.getMethod("getOnBackInvokedDispatcher");
+                backDispatcher = getDispatcher.invoke(this);
+            }
+            Class<?> callbackType = Class.forName("android.window.OnBackInvokedCallback");
+            Class<?> dispatcherType = Class.forName("android.window.OnBackInvokedDispatcher");
+            if (open) {
+                if (backCallback == null) {
+                    backCallback = Proxy.newProxyInstance(
+                            callbackType.getClassLoader(),
+                            new Class<?>[]{callbackType},
+                            (proxy, method, args) -> {
+                                if ("onBackInvoked".equals(method.getName())) {
+                                    runOnUiThread(() -> {
+                                        if (webView != null && webView.canGoBack()) {
+                                            webView.goBack();
+                                        } else {
+                                            moveTaskToBack(true);
+                                        }
+                                    });
+                                }
+                                return null;
+                            });
+                }
+                Method register = dispatcherType.getMethod(
+                        "registerOnBackInvokedCallback", int.class, callbackType);
+                register.invoke(backDispatcher, 0, backCallback);
+                backCallbackRegistered = true;
+            } else {
+                Method unregister = dispatcherType.getMethod(
+                        "unregisterOnBackInvokedCallback", callbackType);
+                unregister.invoke(backDispatcher, backCallback);
+                backCallbackRegistered = false;
+            }
+        } catch (Exception ignored) {
+            // Older vendor ROMs or a changed hidden API: fall back to onBackPressed.
+        }
     }
 
     private boolean isLocalHttp(Uri uri) {
