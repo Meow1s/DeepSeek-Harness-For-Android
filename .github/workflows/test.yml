@@ -28,5 +28,6 @@ jobs:
           sh -n scripts/install-plugins.sh
           sh -n scripts/install-dsh-reset-page.sh
           sh -n scripts/sync-github.sh
+          sh -n android-app/build.sh
       - name: Smoke test
         run: node test/smoke.mjs

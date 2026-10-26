@@ -3,7 +3,7 @@
 A mobile-first, **Miuix-styled launcher** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).
 
 > **Unofficial community project.** Not affiliated with, endorsed by, or sponsored by DeepSeek or Xiaomi.  
-> This is a **PWA launcher**, not a native APK, and not an official DeepSeek client. It needs DSH running in a Linux userland on Android (Eta, Termux/proot, etc.).
+> This project is a **PWA launcher** with an optional thin APK WebView shell, not a standalone native DSH client and not an official DeepSeek client. It needs DSH running in a Linux userland on Android (Eta, Termux/proot, etc.).
 
 [中文说明](README.zh.md)
 
@@ -36,6 +36,7 @@ All data stays on the device. There is no telemetry, account, or external servic
 - **Recent sessions**: reads DSH's local session projection cache and shows the six most recent titles, workspaces, and ages.
 - **Profiles, workspace, port, bind address**: editable from the phone.
 - **PWA**: installable to the home screen, service worker offline shell, standalone display.
+- **APK shell**: an optional signed Android WebView wrapper that opens the local launcher.
 - **Boot hook**: optional KernelSU `service.d` script to start the launcher after boot. It does not auto-start DSH.
 - **Security defaults**: loopback-only by default, optional access key for non-loopback binds, token/API-key redaction in the log viewer.
 
@@ -82,6 +83,27 @@ The launcher ships a manifest, icons, and a service worker. On Chrome Android:
 3. If no prompt appears, use Chrome's menu → **Add to Home screen / Install app**.
 
 The PWA is scoped to the launcher origin. If you open the launcher via `localhost`, DSH links use `localhost` too, keeping the DSH auth cookie same-site inside the iframe.
+
+## Android APK
+
+A signed APK is published on [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest):
+
+```text
+dsh-launcher-1.0.0.apk
+```
+
+The APK is a **thin WebView shell** for the local launcher:
+
+- it opens `http://127.0.0.1:3081/` in a full-screen WebView;
+- it does **not** bundle Node, DSH, or the proot rootfs — start the launcher in
+  Eta/Termux first;
+- if the launcher is down, the native error screen offers **重试** and, on
+  Root/KernelSU, **启动本地服务** (runs `/data/adb/service.d/dsh-launcher.sh`);
+- package `com.meow1s.dshlauncher`, minSdk 26, targetSdk 34.
+
+Build it yourself from [android-app/README.md](android-app/README.md). The release
+is signed with a local keystore; keep that key safe if you want to publish
+updates.
 
 ## Bundled DSH plugins
 
@@ -218,6 +240,7 @@ node --check server.mjs
 node --check public/app.js
 node --check public/sw.js
 sh -n scripts/install-plugins.sh
+sh -n android-app/build.sh
 node test/smoke.mjs
 ```
 
@@ -247,7 +270,7 @@ sh scripts/sync-github.sh "feat: describe the change"
 
 ## Limitations
 
-- Not a native Android APK; it is a local PWA shell around DSH.
+- The APK is a thin WebView shell; it does not bundle Node, DSH, or the proot rootfs.
 - **dsh-web-mobile and dsh-ops are pinned third-party snapshots. Updating them requires replacing the directories and re-testing DSH compatibility. dsh-ops native runtime support is platform-specific.**
 - A DSH instance started outside the launcher cannot be stopped/restarted by the launcher.
 - The optional boot hook assumes Eta's paths and root/KernelSU; adapt it for other environments.

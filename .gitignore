@@ -2,3 +2,6 @@ data/
 node_modules/
 *.log
 .DS_Store
+.secrets/
+dist/
+android-app/build/

@@ -11,7 +11,7 @@
 ![设置界面](docs/settings.png)
 
 > **非官方社区项目。** 与 DeepSeek、小米均无隶属或背书关系。  
-> 这是一个 **PWA 启动器**，不是原生 APK，也不是 DeepSeek 官方 Android 客户端。它需要 DSH 在 Android 的 Linux 用户空间（Eta、Termux/proot 等）中运行。
+> 这是一个 **PWA 启动器**，附带可选的薄 APK WebView 壳；不是独立的原生 DSH 客户端，也不是 DeepSeek 官方 Android 客户端。它需要 DSH 在 Android 的 Linux 用户空间（Eta、Termux/proot 等）中运行。
 
 ## 为什么
 
@@ -36,6 +36,7 @@ DSH 在桌面上很好用，但在手机上通常要打开终端、启动 `dsh w
 - **最近会话**：读取 DSH 本地投影缓存，显示最近 6 个会话的标题、工作区和时间。
 - **配置**：在手机上切换 Profile、工作区、端口、监听地址。
 - **PWA**：可添加到主屏，Service Worker 离线壳，独立窗口显示。
+- **APK 壳**：可选的签名 Android WebView 包装，直接打开本地启动器。
 - **开机自启**：可选 KernelSU `service.d` 钩子；只启动启动器，不自动启动 DSH。
 - **安全默认值**：默认只监听回环地址；监听其它地址时要求访问密钥；日志会脱敏 token / API key。
 - **零运行时 npm 依赖**：Node 标准库 + 内置的 Miuix CSS。
@@ -71,6 +72,25 @@ http://127.0.0.1:3081/
 3. 如果没弹出安装提示，打开 Chrome 菜单 →「添加到主屏幕 / 安装应用」。
 
 如果通过 `localhost` 打开启动器，DSH 链接也会使用 `localhost`，让 iframe 内的认证 cookie 保持 same-site。
+
+## Android APK
+
+签名 APK 已发布到 [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest)：
+
+```text
+dsh-launcher-1.0.0.apk
+```
+
+APK 是一个**很薄的 WebView 壳**：
+
+- 打开 `http://127.0.0.1:3081/`，全屏 WebView；
+- **不**内置 Node / DSH / proot rootfs；本地启动器仍需在 Eta / Termux 中运行；
+- 本地服务没启动时，原生错误页提供「重试」和「启动本地服务」（需要 Root /
+  KernelSU，执行 `/data/adb/service.d/dsh-launcher.sh`）；
+- 包名 `com.meow1s.dshlauncher`，minSdk 26，targetSdk 34。
+
+从 [android-app/README.md](android-app/README.md) 可以自行构建。发布 APK 使用本地
+keystore 签名；如果要持续发布更新，请保管好这个 key。
 
 ## 内置 DSH 插件
 
@@ -204,6 +224,7 @@ node --check server.mjs
 node --check public/app.js
 node --check public/sw.js
 sh -n scripts/install-plugins.sh
+sh -n android-app/build.sh
 node test/smoke.mjs
 ```
 
@@ -233,7 +254,7 @@ sh scripts/sync-github.sh "feat: 描述这次改动"
 
 ## 已知限制
 
-- 不是原生 Android APK，是本地 PWA 壳。
+- APK 是薄 WebView 壳，不内置 Node / DSH / proot rootfs。
 - **dsh-web-mobile 和 dsh-ops 是固定版本的第三方快照；升级需要替换目录并重新验证 DSH 兼容性。dsh-ops 的原生运行时支持与平台相关。**
 - 外部启动的 DSH 不能在启动器内停止/重启。
 - Android 开机钩子默认依赖 Eta 路径和 root/KernelSU。
