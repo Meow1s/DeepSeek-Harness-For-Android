@@ -531,25 +531,82 @@
     openSheet('settings')
   }
 
+  function activeSheet() {
+    if (state.openSheet === 'settings') return els.settingsSheet
+    if (state.openSheet === 'logs') return els.logsSheet
+    return null
+  }
+
+  function resetSheetMotion() {
+    for (const sheet of [els.settingsSheet, els.logsSheet]) {
+      if (!sheet) continue
+      sheet.style.transition = ''
+      sheet.style.transform = ''
+      sheet.style.opacity = ''
+    }
+    if (els.sheetBackdrop) {
+      els.sheetBackdrop.style.transition = ''
+      els.sheetBackdrop.style.opacity = ''
+    }
+  }
+
   function openSheet(name) {
+    resetSheetMotion()
     state.openSheet = name
     els.sheetBackdrop.hidden = false
     els.settingsSheet.hidden = name !== 'settings'
     els.logsSheet.hidden = name !== 'logs'
     els.body.classList.add('sheet-open')
     window.DSHNative?.setSheetOpen?.(true)
+    if (!history.state?.sheet) {
+      history.pushState({ sheet: name }, '', '#' + name)
+    }
   }
 
-  function closeSheet() {
+  function closeSheet(fromPopstate = false) {
+    if (!state.openSheet) return
     state.openSheet = ''
     els.sheetBackdrop.hidden = true
     els.settingsSheet.hidden = true
     els.logsSheet.hidden = true
     els.body.classList.remove('sheet-open')
     window.DSHNative?.setSheetOpen?.(false)
+    resetSheetMotion()
+    if (!fromPopstate) {
+      if (history.state?.sheet) {
+        history.back()
+      } else if (location.hash === '#settings' || location.hash === '#logs') {
+        history.replaceState(null, '', location.pathname + location.search)
+      }
+    }
   }
 
   window.__dshCloseSheet = closeSheet
+  window.__dshPredictiveBackStart = () => {
+    const sheet = activeSheet()
+    if (!sheet) return
+    sheet.style.transition = 'none'
+    els.sheetBackdrop.style.transition = 'none'
+  }
+  window.__dshPredictiveBack = (progress) => {
+    const sheet = activeSheet()
+    if (!sheet) return
+    const p = Math.max(0, Math.min(1, Number(progress) || 0))
+    sheet.style.transform = 'translateX(-50%) translateY(' + (p * 88) + '%)'
+    sheet.style.opacity = String(1 - p * 0.28)
+    els.sheetBackdrop.style.opacity = String(1 - p * 0.72)
+  }
+  window.__dshPredictiveBackCancel = () => {
+    const sheet = activeSheet()
+    if (!sheet) return
+    const ease = 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 180ms ease'
+    sheet.style.transition = ease
+    els.sheetBackdrop.style.transition = 'opacity 180ms ease'
+    sheet.style.transform = 'translateX(-50%) translateY(0)'
+    sheet.style.opacity = '1'
+    els.sheetBackdrop.style.opacity = ''
+    window.setTimeout(resetSheetMotion, 200)
+  }
 
   function askConfirm(title, text, label = '确定') {
     if (state.confirmResolve) {
@@ -886,8 +943,8 @@
         render(data)
       } catch {}
     })
-    els.sheetBackdrop.addEventListener('click', closeSheet)
-    $$('[data-close]').forEach((button) => button.addEventListener('click', closeSheet))
+    els.sheetBackdrop.addEventListener('click', () => closeSheet())
+    $$('[data-close]').forEach((button) => button.addEventListener('click', () => closeSheet()))
     els.settingsForm.addEventListener('submit', saveSettings)
     els.workspaceSelect.addEventListener('change', () => {
       const custom = els.workspaceSelect.value === '__custom__'
@@ -949,7 +1006,8 @@
       }
     })
     window.addEventListener('popstate', () => {
-      if (state.dshOpen) closeDsh(true)
+      if (state.openSheet) closeSheet(true)
+      else if (state.dshOpen) closeDsh(true)
     })
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {

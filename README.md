@@ -36,6 +36,7 @@ All data stays on the device. There is no telemetry, account, or external servic
 - **PWA**: installable to the home screen, service worker offline shell, standalone display.
 - **APK shell**: an optional signed Android WebView wrapper that opens the local launcher.
 - **Miuix back**: Android 13+ predictive back is enabled; returning from DSH uses a scale/rounded transition.
+- **Predictive sheet back**: Settings and Logs are history entries; Android 14+ lets the sheet follow the back gesture and return to the launcher home.
 - **Task notifications**: an ongoing notification while DSH works, with elapsed time and the current process; completion and failure notifications follow.
 - **Boot hook**: optional KernelSU `service.d` script to start the launcher after boot. It does not auto-start DSH.
 - **Security defaults**: loopback-only by default, optional access key for non-loopback binds, token/API-key redaction in the log viewer.
@@ -89,7 +90,7 @@ The PWA is scoped to the launcher origin. If you open the launcher via `localhos
 A signed APK is published on [GitHub Releases](https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases/latest):
 
 ```text
-dsh-launcher-1.0.4.apk
+dsh-launcher-1.0.5.apk
 ```
 
 The APK is a **thin WebView shell** for the local launcher:

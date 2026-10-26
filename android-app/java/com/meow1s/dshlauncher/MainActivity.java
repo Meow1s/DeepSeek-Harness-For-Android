@@ -29,8 +29,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import android.window.BackEvent;
+import android.window.OnBackAnimationCallback;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +59,6 @@ public class MainActivity extends Activity {
     private Button startServiceButton;
     private ValueCallback<Uri[]> fileCallback;
     private boolean mainFrameFailed = false;
-    private Object backDispatcher;
     private Object backCallback;
     private boolean backCallbackRegistered = false;
     private boolean dshOpen = false;
@@ -180,6 +182,15 @@ public class MainActivity extends Activity {
                     showError(detail);
                 }
             }
+
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                boolean hasSheet = url != null && (url.endsWith("#settings") || url.endsWith("#logs"));
+                if (hasSheet != sheetOpen) {
+                    sheetOpen = hasSheet;
+                    updateBackCallback();
+                }
+            }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -284,50 +295,135 @@ public class MainActivity extends Activity {
         }
     }
 
+    private interface BackGesture {
+        void start();
+
+        void progress(float progress);
+
+        void cancel();
+
+        void invoke();
+    }
+
+    private BackGesture backGesture() {
+        return new BackGesture() {
+            @Override
+            public void start() {
+                if (sheetOpen) evaluateJs("window.__dshPredictiveBackStart && window.__dshPredictiveBackStart()");
+            }
+
+            @Override
+            public void progress(float progress) {
+                if (sheetOpen) {
+                    evaluateJs("window.__dshPredictiveBack && window.__dshPredictiveBack(" + progress + ")");
+                }
+            }
+
+            @Override
+            public void cancel() {
+                if (sheetOpen) evaluateJs("window.__dshPredictiveBackCancel && window.__dshPredictiveBackCancel()");
+            }
+
+            @Override
+            public void invoke() {
+                handleBackInvoked();
+            }
+        };
+    }
+
+    private void evaluateJs(String script) {
+        if (webView != null) webView.evaluateJavascript(script, null);
+    }
+
+    private void handleBackInvoked() {
+        if (sheetOpen && webView != null) {
+            if (webView.canGoBack()) {
+                webView.goBack();
+            } else {
+                evaluateJs("window.__dshCloseSheet && window.__dshCloseSheet()");
+            }
+        } else if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            moveTaskToBack(true);
+        }
+    }
+
     private void updateBackCallback() {
         if (Build.VERSION.SDK_INT < 33) return;
         boolean shouldRegister = dshOpen || sheetOpen;
         if (shouldRegister == backCallbackRegistered) return;
         try {
-            if (backDispatcher == null) {
-                Method getDispatcher = Activity.class.getMethod("getOnBackInvokedDispatcher");
-                backDispatcher = getDispatcher.invoke(this);
-            }
-            Class<?> callbackType = Class.forName("android.window.OnBackInvokedCallback");
-            Class<?> dispatcherType = Class.forName("android.window.OnBackInvokedDispatcher");
             if (shouldRegister) {
-                if (backCallback == null) {
-                    backCallback = Proxy.newProxyInstance(
-                            callbackType.getClassLoader(),
-                            new Class<?>[]{callbackType},
-                            (proxy, method, args) -> {
-                                if ("onBackInvoked".equals(method.getName())) {
-                                    runOnUiThread(() -> {
-                                        if (sheetOpen && webView != null) {
-                                            webView.evaluateJavascript(
-                                                    "window.__dshCloseSheet && window.__dshCloseSheet()", null);
-                                        } else if (webView != null && webView.canGoBack()) {
-                                            webView.goBack();
-                                        } else {
-                                            moveTaskToBack(true);
-                                        }
-                                    });
-                                }
-                                return null;
-                            });
+                if (Build.VERSION.SDK_INT >= 34) {
+                    backCallback = Api34Back.register(this, backGesture());
+                } else {
+                    backCallback = Api33Back.register(this, backGesture());
                 }
-                Method register = dispatcherType.getMethod(
-                        "registerOnBackInvokedCallback", int.class, callbackType);
-                register.invoke(backDispatcher, 0, backCallback);
                 backCallbackRegistered = true;
             } else {
-                Method unregister = dispatcherType.getMethod(
-                        "unregisterOnBackInvokedCallback", callbackType);
-                unregister.invoke(backDispatcher, backCallback);
+                if (Build.VERSION.SDK_INT >= 34) {
+                    Api34Back.unregister(this, backCallback);
+                } else {
+                    Api33Back.unregister(this, backCallback);
+                }
+                backCallback = null;
                 backCallbackRegistered = false;
             }
         } catch (Exception ignored) {
-            // Older vendor ROMs or a changed hidden API: fall back to onBackPressed.
+            // A vendor ROM without the expected back dispatcher: use onBackPressed.
+        }
+    }
+
+    private static final class Api33Back {
+        static Object register(Activity activity, BackGesture gesture) {
+            OnBackInvokedCallback callback = gesture::invoke;
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+            return callback;
+        }
+
+        static void unregister(Activity activity, Object callback) {
+            if (callback instanceof OnBackInvokedCallback) {
+                activity.getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                        (OnBackInvokedCallback) callback);
+            }
+        }
+    }
+
+    private static final class Api34Back {
+        static Object register(Activity activity, BackGesture gesture) {
+            OnBackAnimationCallback callback = new OnBackAnimationCallback() {
+                @Override
+                public void onBackStarted(BackEvent event) {
+                    gesture.start();
+                }
+
+                @Override
+                public void onBackProgressed(BackEvent event) {
+                    gesture.progress(event.getProgress());
+                }
+
+                @Override
+                public void onBackCancelled() {
+                    gesture.cancel();
+                }
+
+                @Override
+                public void onBackInvoked() {
+                    gesture.invoke();
+                }
+            };
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+            return callback;
+        }
+
+        static void unregister(Activity activity, Object callback) {
+            if (callback instanceof OnBackAnimationCallback) {
+                activity.getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                        (OnBackAnimationCallback) callback);
+            }
         }
     }
 
@@ -452,7 +548,8 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (sheetOpen && webView != null) {
-            webView.evaluateJavascript("window.__dshCloseSheet && window.__dshCloseSheet()", null);
+            if (webView.canGoBack()) webView.goBack();
+            else evaluateJs("window.__dshCloseSheet && window.__dshCloseSheet()");
         } else if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {

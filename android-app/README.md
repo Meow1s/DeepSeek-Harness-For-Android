@@ -16,6 +16,9 @@ A thin Android WebView shell for the local DSH launcher.
   through WebView history; at launcher home the callback is released so the
   system/Miuix predictive animation can close the app. DSH close uses a
   scale/rounded transition.
+- Settings and Logs sheets push a history entry. On Android 14+ an
+  OnBackAnimationCallback drives the predictive drag/fade and returns to the
+  launcher home; on Android 13 back closes the sheet.
 - Task notifications: a foreground service posts an ongoing notification with
   a chronometer and live work process while a turn is running, then a normal
   completion or failure notification. Android 13+ asks for notification
@@ -30,7 +33,7 @@ A thin Android WebView shell for the local DSH launcher.
 | Field | Value |
 | --- | --- |
 | Package | `com.meow1s.dshlauncher` |
-| Version | 1.0.4 (versionCode 5) |
+| Version | 1.0.5 (versionCode 6) |
 | minSdk | 26 |
 | targetSdk | 34 |
 | Label | DSH Launcher |
@@ -60,7 +63,7 @@ sh android-app/build.sh
 Output:
 
 ```text
-dist/dsh-launcher-1.0.4.apk
+dist/dsh-launcher-1.0.5.apk
 ```
 
 Create a release key (never commit it):
@@ -80,14 +83,14 @@ The signed APK is uploaded to:
 
 https://github.com/Meow1s/DeepSeek-Harness-For-Android/releases
 
-Release 1.0.4 (settings back + icon):
+Release 1.0.5 (predictive sheet back):
 
-- APK: `dsh-launcher-1.0.4.apk`
-- SHA-256: `0545c8640eb0a85a461808ee980af4f44f10f0185edb9a80ead09e0bd6830d37`
+- APK: `dsh-launcher-1.0.5.apk`
+- SHA-256: `11a7f5d694f204698eb41167de0b6d13882adc9c81b934dc931bf3e743345792`
 - Signing certificate SHA-256:
   `db871ab22df69e3289bbdc0480510cc5f482cf249aaac82a9d84a5eaf23a92a0`
 
-Release 1.0.3 (task notifications), 1.0.2 (homepage + Miuix back), 1.0.1 (official icon) and 1.0.0 remain available. The certificate
+Release 1.0.4 (settings icon + back fix), 1.0.3 (task notifications), 1.0.2 (homepage + Miuix back), 1.0.1 (official icon) and 1.0.0 remain available. The certificate
 fingerprint is recorded in each release note.
 
 ## Limitations

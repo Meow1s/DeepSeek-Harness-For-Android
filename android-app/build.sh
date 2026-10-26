@@ -18,10 +18,13 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/android-app"
 BUILD="$APP/build"
 DIST="$ROOT/dist"
-NAME="dsh-launcher-1.0.4.apk"
+NAME="dsh-launcher-1.0.5.apk"
 
 : "${ANDROID_JAR:?set ANDROID_JAR to the Android SDK android.jar}"
 : "${D8_JAR:?set D8_JAR to build-tools/lib/d8.jar}"
+if [ -z "$JAVA_JAR" ]; then
+  JAVA_JAR="$ANDROID_JAR"
+fi
 : "${KEYSTORE:?set KEYSTORE to the release keystore}"
 : "${KS_PASS:?set KS_PASS (keystore password)}"
 : "${KEY_PASS:?set KEY_PASS (key password)}"
@@ -50,12 +53,12 @@ aapt2 link -o "$BUILD/unsigned.apk" \
 echo "[2/6] 编译 Java"
 find "$APP/java" "$BUILD/gen" -name '*.java' > "$BUILD/sources.txt"
 javac -encoding UTF-8 -source 8 -target 8 -Xlint:-options \
-  -classpath "$ANDROID_JAR" -d "$BUILD/classes" @"$BUILD/sources.txt"
+  -classpath "$JAVA_JAR" -d "$BUILD/classes" @"$BUILD/sources.txt"
 
 echo "[3/6] dex"
 find "$BUILD/classes" -name '*.class' > "$BUILD/classes.txt"
 java -cp "$D8_JAR" com.android.tools.r8.D8 --release --min-api 26 \
-  --lib "$ANDROID_JAR" --output "$BUILD/dex" $(cat "$BUILD/classes.txt")
+  --lib "$JAVA_JAR" --output "$BUILD/dex" $(cat "$BUILD/classes.txt")
 
 echo "[4/6] 打包 APK"
 cp "$BUILD/dex/classes.dex" "$BUILD/classes.dex"
